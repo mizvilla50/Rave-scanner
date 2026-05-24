@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>RAVE Scanner V2</title>
+  <style>
+    :root{
+      --bg:#06101e; --card:#0d1829; --card2:#111f35; --line:#21314d; --text:#f3f7ff;
+      --muted:#97a8c3; --blue:#4da3ff; --good:#21c782; --warn:#f2b84b; --bad:#ff6464;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:radial-gradient(circle at top,#122845 0,#06101e 50%,#030711 100%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+    header{padding:18px 14px 12px;position:sticky;top:0;background:rgba(6,16,30,.94);backdrop-filter:blur(12px);z-index:10;border-bottom:1px solid var(--line)}
+    h1{font-size:21px;margin:0 0 6px}
+    .sub{font-size:12px;color:var(--muted);line-height:1.4}
+    main{padding:14px;max-width:1050px;margin:0 auto 50px}
+    .card{background:rgba(13,24,41,.96);border:1px solid var(--line);border-radius:18px;padding:13px;margin-bottom:12px;box-shadow:0 12px 35px rgba(0,0,0,.25)}
+    .grid{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+    @media(min-width:760px){.grid{grid-template-columns:repeat(6,1fr)}}
+    label{display:block;font-size:11px;color:var(--muted);margin:0 0 5px}
+    select,input,button{width:100%;border-radius:13px;padding:11px;font-size:14px;color:var(--text);background:var(--card2);border:1px solid var(--line)}
+    button{font-weight:900;background:linear-gradient(135deg,#1677ff,#28d0ff);border:0;cursor:pointer}
+    button.secondary{background:#14243b;border:1px solid var(--line)}
+    .status{font-size:12px;line-height:1.45;color:var(--muted);margin-top:11px}
+    .ok{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+    .row{border-top:1px solid var(--line);padding:13px 0;display:grid;grid-template-columns:1fr auto;gap:10px}
+    .row:first-child{border-top:0}
+    .name{font-weight:950;font-size:15px}.meta{font-size:12px;color:var(--muted);margin-top:3px}
+    .score{font-size:24px;font-weight:950;text-align:right;min-width:45px}
+    .pill{display:inline-block;font-size:10px;font-weight:900;border-radius:999px;padding:4px 7px;margin-left:5px}
+    .green{background:rgba(33,199,130,.16);color:var(--good)} .yellow{background:rgba(242,184,75,.16);color:var(--warn)} .red{background:rgba(255,100,100,.16);color:var(--bad)}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}
+    .stat{background:#0a1424;border:1px solid rgba(255,255,255,.03);border-radius:12px;padding:8px}
+    .stat span{display:block;font-size:10px;color:var(--muted);margin-bottom:3px}.stat b{font-size:12px}
+    .plan{font-size:12px;line-height:1.45;color:#d6e1f7;margin-top:9px}
+    .links{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+    .links a{font-size:12px;text-decoration:none;color:var(--blue);background:#0a1a30;border:1px solid var(--line);border-radius:999px;padding:7px 9px}
+    .topline{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+    .small{font-size:11px;color:var(--muted)}
+    .notice{border-left:3px solid var(--warn);background:rgba(242,184,75,.08);padding:10px;border-radius:12px;font-size:12px;line-height:1.45;color:#f8dfb1}
+    .api{display:grid;gap:7px}.api div{font-size:12px;background:#0a1424;border:1px solid var(--line);border-radius:12px;padding:9px}
+  </style>
+</head>
+<body>
+<header>
+  <h1>RAVE Scanner V2</h1>
+  <div class="sub">Hosted mobile scanner for crypto momentum setups. Use it as a filter, not as an automatic buy signal.</div>
+</header>
+
+<main>
+  <section class="card notice">
+    Important: this version is designed to work from a real hosted URL such as GitHub Pages or Cloudflare Pages. Opening it directly from iPhone Files is unreliable because browser security blocks some live API calls.
+  </section>
+
+  <section class="card">
+    <div class="grid">
+      <div><label>Max market cap</label><select id="cap"><option value="50000000">$50M</option><option value="100000000" selected>$100M</option><option value="250000000">$250M</option><option value="1000000000">$1B</option><option value="999999999999">Any</option></select></div>
+      <div><label>Min volume</label><select id="vol"><option value="0">Any</option><option value="100000">$100K</option><option value="500000" selected>$500K</option><option value="1000000">$1M</option><option value="5000000">$5M</option></select></div>
+      <div><label>Min 24h gain</label><select id="gain"><option value="-100">Any</option><option value="3">3%</option><option value="8" selected>8%</option><option value="15">15%</option><option value="30">30%</option></select></div>
+      <div><label>Source</label><select id="source"><option value="all" selected>All available</option><option value="cg">CoinGecko</option><option value="binance">Binance</option><option value="dex">DexScreener boosts</option></select></div>
+      <div><label>Sort by</label><select id="sort"><option value="score" selected>RAVE score</option><option value="gain">24h gain</option><option value="volume">Volume</option></select></div>
+      <div><label>&nbsp;</label><button id="scanBtn">Scan</button></div>
+    </div>
+    <div class="status" id="status">Ready. First tap “Test APIs”, then scan.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+      <button class="secondary" id="testBtn">Test APIs</button>
+      <button class="secondary" id="clearBtn">Clear watchlist</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="topline"><b>API status</b><span class="small">Shows what your browser allows</span></div>
+    <div class="api" id="apiStatus"><div>Not tested yet.</div></div>
+  </section>
+
+  <section class="card">
+    <div class="topline"><b>Top setups</b><span class="small" id="count">0 results</span></div>
+    <div id="results"><div class="small">No scan yet.</div></div>
+  </section>
+
+  <section class="card">
+    <div class="topline"><b>Watchlist</b><span class="small">Saved on this device</span></div>
+    <div id="watchlist"></div>
+  </section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const apiStatus = {coingecko:null, binance:null, dexscreener:null};
+let watch = JSON.parse(localStorage.getItem("rave_watch_v2") || "[]");
+
+function fmtUsd(n){
+  if(n===null || n===undefined || isNaN(Number(n))) return "—";
+  n = Number(n);
+  if(Math.abs(n) >= 1e9) return "$"+(n/1e9).toFixed(2)+"B";
+  if(Math.abs(n) >= 1e6) return "$"+(n/1e6).toFixed(2)+"M";
+  if(Math.abs(n) >= 1e3) return "$"+(n/1e3).toFixed(1)+"K";
+  if(Math.abs(n) >= 1) return "$"+n.toFixed(3);
+  return "$"+n.toPrecision(3);
+}
+function fmtPct(n){ return n===null || n===undefined || isNaN(Number(n)) ? "—" : (Number(n)>0?"+":"")+Number(n).toFixed(1)+"%"; }
+function status(msg){ $("status").innerHTML = msg; }
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+async function getJson(url, timeout=12000){
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(), timeout);
+  try{
+    const r = await fetch(url, {signal:controller.signal, headers:{accept:"application/json"}});
+    clearTimeout(timer);
+    if(!r.ok) throw new Error(r.status+" "+r.statusText);
+    return await r.json();
+  }catch(e){ clearTimeout(timer); throw e; }
+}
+
+async function coinGecko(){
+  let out=[];
+  for(let page=1; page<=3; page++){
+    const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=${page}&sparkline=false&price_change_percentage=1h,24h,7d`;
+    const d = await getJson(url);
+    out.push(...d.map(x=>({
+      source:"CoinGecko", id:x.id, symbol:(x.symbol||"").toUpperCase(), name:x.name || x.id,
+      price:x.current_price, mcap:x.market_cap, volume:x.total_volume,
+      change1h:x.price_change_percentage_1h_in_currency, change24:x.price_change_percentage_24h,
+      change7d:x.price_change_percentage_7d_in_currency,
+      url:`https://www.coingecko.com/en/coins/${x.id}`
+    })));
+    await sleep(350);
+  }
+  return out;
+}
+async function binance(){
+  const d = await getJson("https://api.binance.com/api/v3/ticker/24hr");
+  return d.filter(x=>x.symbol.endsWith("USDT") && !/(UP|DOWN|BULL|BEAR)USDT$/.test(x.symbol))
+    .map(x=>({
+      source:"Binance", id:x.symbol, symbol:x.symbol.replace("USDT",""), name:x.symbol.replace("USDT","/USDT"),
+      price:Number(x.lastPrice), mcap:null, volume:Number(x.quoteVolume), change1h:null,
+      change24:Number(x.priceChangePercent), change7d:null,
+      url:`https://www.binance.com/en/trade/${x.symbol.replace("USDT","_USDT")}`
+    }));
+}
+async function dexBoosts(){
+  let data=[];
+  const endpoints=["https://api.dexscreener.com/token-boosts/latest/v1","https://api.dexscreener.com/token-boosts/top/v1"];
+  for(const u of endpoints){
+    try{
+      const d = await getJson(u);
+      if(Array.isArray(d)) data.push(...d);
+    }catch(e){}
+  }
+  const seen = new Set();
+  return data.filter(x => x && x.chainId && x.tokenAddress && !seen.has(x.chainId+":"+x.tokenAddress) && seen.add(x.chainId+":"+x.tokenAddress))
+    .slice(0,100).map(x=>({
+      source:"DexBoost", id:x.tokenAddress, symbol:(x.chainId||"DEX").toUpperCase(),
+      name:(x.description || "Boosted token").slice(0,55), price:null, mcap:null, volume:null,
+      change1h:null, change24:null, change7d:null, boost:Number(x.amount || x.totalAmount || 0),
+      url:x.url || `https://dexscreener.com/${x.chainId}/${x.tokenAddress}`
+    }));
+}
+function score(t){
+  let s=0, gain=Number(t.change24 || 0), vol=Number(t.volume || 0), cap=Number(t.mcap || 0);
+  s += Math.max(0, Math.min(35, gain*1.1));
+  s += Math.max(0, Math.min(25, (Math.log10(Math.max(vol,1))-4)*7));
+  if(cap) s += cap<20e6?25:cap<100e6?18:cap<250e6?11:cap<1e9?6:2;
+  else s += t.source==="DexBoost"?14:5;
+  if(t.change1h && t.change1h>0) s += Math.min(10, t.change1h);
+  if(t.boost) s += Math.min(18, t.boost/20);
+  if(gain>90) s -= 10;
+  if(vol && cap && vol/cap > .5) s += 6;
+  return Math.round(Math.max(0,Math.min(100,s)));
+}
+function risk(t){
+  if(t.source==="DexBoost") return ["HIGH","red"];
+  if(!t.mcap) return ["UNKNOWN","yellow"];
+  if(t.mcap<20e6) return ["HIGH","red"];
+  if(t.change24>60) return ["HOT","yellow"];
+  return ["MED","yellow"];
+}
+function plan(t){
+  if(!t.price) return "No price from this source. Open chart and confirm liquidity, contract, and spread manually.";
+  const p=Number(t.price), hot=Number(t.change24||0)>35;
+  const entryLow=p*(hot?.96:.98), stop=p*(hot?.88:.92), tp1=p*(hot?1.14:1.10), tp2=p*(hot?1.28:1.20);
+  return `Entry idea: ${fmtUsd(entryLow)}–${fmtUsd(p)} after confirmation. Stop: ${fmtUsd(stop)}. TP1: ${fmtUsd(tp1)}. TP2: ${fmtUsd(tp2)}.`;
+}
+function pass(t){
+  const cap=Number($("cap").value), vol=Number($("vol").value), gain=Number($("gain").value);
+  if(t.mcap && t.mcap>cap) return false;
+  if(t.volume && t.volume<vol) return false;
+  if(t.change24!==null && t.change24!==undefined && t.change24<gain) return false;
+  return true;
+}
+function renderApi(){
+  const line = (name, v) => `<div><b>${name}:</b> ${v===true?'<span class="ok">working</span>':v===false?'<span class="bad">blocked/failed</span>':'<span class="warn">not tested</span>'}</div>`;
+  $("apiStatus").innerHTML = line("CoinGecko",apiStatus.coingecko)+line("Binance",apiStatus.binance)+line("DexScreener",apiStatus.dexscreener);
+}
+function row(t){
+  const [r,c]=risk(t);
+  return `<div class="row">
+    <div>
+      <div class="name">${t.name} <span class="pill ${c}">${r}</span></div>
+      <div class="meta">${t.symbol} • ${t.source}</div>
+      <div class="stats">
+        <div class="stat"><span>Price</span><b>${fmtUsd(t.price)}</b></div>
+        <div class="stat"><span>24h</span><b>${fmtPct(t.change24)}</b></div>
+        <div class="stat"><span>Volume</span><b>${fmtUsd(t.volume)}</b></div>
+        <div class="stat"><span>MCap</span><b>${fmtUsd(t.mcap)}</b></div>
+        <div class="stat"><span>1h</span><b>${fmtPct(t.change1h)}</b></div>
+        <div class="stat"><span>7d</span><b>${fmtPct(t.change7d)}</b></div>
+      </div>
+      <div class="plan">${plan(t)}</div>
+      <div class="links">
+        <a target="_blank" rel="noopener" href="${t.url}">Open chart</a>
+        <a href="#" onclick='save(${JSON.stringify(t).replaceAll("'","&#39;")});return false;'>Save</a>
+      </div>
+    </div>
+    <div class="score">${t.score}</div>
+  </div>`;
+}
+function render(list){
+  $("count").textContent = `${list.length} results`;
+  $("results").innerHTML = list.length ? list.slice(0,30).map(row).join("") : '<div class="small">No results. Lower filters or test APIs.</div>';
+}
+function renderWatch(){
+  $("watchlist").innerHTML = watch.length ? watch.map((t,i)=>`<div class="row"><div><div class="name">${t.name}</div><div class="meta">${t.symbol} • ${t.source}</div><div class="links"><a href="${t.url}" target="_blank">Open</a><a href="#" onclick="removeWatch(${i});return false;">Remove</a></div></div><div class="score">${t.score||""}</div></div>`).join("") : '<div class="small">Nothing saved yet.</div>';
+}
+function save(t){
+  if(!watch.some(x=>x.id===t.id && x.source===t.source)){
+    watch.unshift(t); watch = watch.slice(0,40);
+    localStorage.setItem("rave_watch_v2", JSON.stringify(watch));
+    renderWatch();
+  }
+}
+function removeWatch(i){ watch.splice(i,1); localStorage.setItem("rave_watch_v2", JSON.stringify(watch)); renderWatch(); }
+
+async function testApis(){
+  status("Testing APIs from your browser...");
+  renderApi();
+  try{ await getJson("https://api.coingecko.com/api/v3/ping",7000); apiStatus.coingecko=true; }catch(e){ apiStatus.coingecko=false; }
+  renderApi();
+  try{ await getJson("https://api.binance.com/api/v3/time",7000); apiStatus.binance=true; }catch(e){ apiStatus.binance=false; }
+  renderApi();
+  try{ await getJson("https://api.dexscreener.com/token-boosts/latest/v1",7000); apiStatus.dexscreener=true; }catch(e){ apiStatus.dexscreener=false; }
+  renderApi();
+  status("API test complete. If one source is blocked, scan still uses the working sources.");
+}
+async function scan(){
+  status("Scanning...");
+  $("results").innerHTML = '<div class="small">Loading live data...</div>';
+  const source=$("source").value;
+  const jobs=[];
+  if(source==="all" || source==="cg") jobs.push(coinGecko().then(x=>({name:"coingecko",ok:true,data:x})).catch(e=>({name:"coingecko",ok:false,error:e.message,data:[]})));
+  if(source==="all" || source==="binance") jobs.push(binance().then(x=>({name:"binance",ok:true,data:x})).catch(e=>({name:"binance",ok:false,error:e.message,data:[]})));
+  if(source==="all" || source==="dex") jobs.push(dexBoosts().then(x=>({name:"dexscreener",ok:true,data:x})).catch(e=>({name:"dexscreener",ok:false,error:e.message,data:[]})));
+  const results=await Promise.all(jobs);
+  let data=[], errors=[];
+  for(const r of results){
+    apiStatus[r.name]=r.ok;
+    if(r.ok) data.push(...r.data); else errors.push(`${r.name}: ${r.error}`);
+  }
+  renderApi();
+  data=data.map(t=>({...t,score:score(t)})).filter(pass);
+  const sort=$("sort").value;
+  data.sort((a,b)=> sort==="gain" ? Number(b.change24||0)-Number(a.change24||0) : sort==="volume" ? Number(b.volume||0)-Number(a.volume||0) : b.score-a.score);
+  render(data);
+  status(`Scan complete: ${data.length} filtered setups. ${errors.length ? '<span class="warn">Issues: '+errors.join(" | ")+'</span>' : '<span class="ok">All selected sources worked.</span>'}`);
+}
+$("scanBtn").addEventListener("click", scan);
+$("testBtn").addEventListener("click", testApis);
+$("clearBtn").addEventListener("click", ()=>{watch=[];localStorage.removeItem("rave_watch_v2");renderWatch();});
+renderWatch(); renderApi();
+</script>
+</body>
+</html>
